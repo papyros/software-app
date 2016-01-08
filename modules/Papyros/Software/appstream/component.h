@@ -56,6 +56,17 @@ public:
     QStringList m_packageNames;
     QStringList m_categories;
     QStringList m_architectures;
+    QStringList m_kudos;
+    QStringList m_permissions;
+    QStringList m_vetos;
+    QStringList m_mimetypes;
+    QString m_projectLicense;
+    QString m_metadataLicense;
+    QString m_sourcePackageName;
+    QString m_updateContact;
+    QString m_projectGroup;
+    QStringList m_compulsoryForDesktops;
+    QStringList m_extends;
 
 private:
     void addKeyword(QString keyword, QString locale);

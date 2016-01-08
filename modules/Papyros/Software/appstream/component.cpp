@@ -27,6 +27,19 @@
 
 using namespace Appstream;
 
+QStringList stringsByTagName(QDomElement element, QString tagName) {
+    QStringList strings;
+
+    QDomNodeList nodes = element.elementsByTagName(tagName);
+    for (int i = 0; i < nodes.count(); i++) {
+        QDomElement subElement = nodes.at(i).toElement();
+        if (!subElement.isNull())
+            strings << subElement.text();
+    }
+
+    return strings;
+}
+
 bool Component::loadFromFile(QString filename)
 {
     switch (kindFromFilename(filename)) {
@@ -60,7 +73,7 @@ bool Component::loadFromAppdataFile(QString filename)
         QString tagName = element.tagName();
         QString text = element.text();
 
-        qDebug() << tagName;
+        qDebug() << tagName << text;
 
         if (tagName == "id") {
             m_id = text;
@@ -87,19 +100,9 @@ bool Component::loadFromAppdataFile(QString filename)
         } else if (tagName == "icon") {
             qDebug() << "WARNING: icon not parsed";
         } else if (tagName == "categories") {
-            QDomNodeList categories = doc.elementsByTagName("category");
-            for (int i = 0; i < categories.count(); i++) {
-                QDomElement category = categories.at(i).toElement();
-                if (!category.isNull())
-                    m_categories << category.text();
-            }
+            m_categories << stringsByTagName(element, "category");
         } else if (tagName == "architectures") {
-            QDomNodeList architectures = doc.elementsByTagName("architecture");
-            for (int i = 0; i < architectures.count(); i++) {
-                QDomElement architecture = architectures.at(i).toElement();
-                if (!architecture.isNull())
-                    m_architectures << architecture.text();
-            }
+            m_architectures << stringsByTagName(element, "architecture");
         } else if (tagName == "keywords") {
             QDomNodeList keywords = doc.elementsByTagName("keyword");
             for (int i = 0; i < keywords.count(); i++) {
@@ -109,6 +112,40 @@ bool Component::loadFromAppdataFile(QString filename)
                     addKeyword(keyword.text(), language);
                 }
             }
+        } else if (tagName == "kudos") {
+            m_kudos << stringsByTagName(element, "kudo");
+        } else if (tagName == "permissions") {
+            m_permissions << stringsByTagName(element, "permission");
+        } else if (tagName == "vetos") {
+            m_vetos << stringsByTagName(element, "veto");
+        } else if (tagName == "mimetypes") {
+            m_mimetypes << stringsByTagName(element, "mimetype");
+        } else if (tagName == "project_license") {
+            m_projectLicense = text;
+        } else if (tagName == "metadata_license") {
+            m_metadataLicense = text;
+        } else if (tagName == "source_pkgname") {
+            m_sourcePackageName = text;
+        } else if (tagName == "updatecontact" || tagName == "update_contact") {
+            m_updateContact = text;
+        } else if (tagName == "url") {
+            qDebug() << "WARNING: url not parsed";
+        } else if (tagName == "project_group") {
+            m_projectGroup = text;
+        } else if (tagName == "compulsory_for_desktop") {
+            m_compulsoryForDesktops << text;
+        } else if (tagName == "extends") {
+            m_extends << text;
+        } else if (tagName == "screenshots") {
+            qDebug() << "WARNING: screenshots not parsed";
+        } else if (tagName == "releases") {
+            qDebug() << "WARNING: releases not parsed";
+        } else if (tagName == "provides") {
+            qDebug() << "WARNING: provides not parsed";
+        } else if (tagName == "languages") {
+            qDebug() << "WARNING: languages not parsed";
+        } else if (tagName == "metadata") {
+            qDebug() << "WARNING: metadata not parsed";
         } else {
             qFatal("Tag not supported: %s", qPrintable(tagName));
         }
