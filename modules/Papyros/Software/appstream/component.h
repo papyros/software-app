@@ -29,6 +29,37 @@
 namespace Appstream
 {
 
+class Url
+{
+public:
+    enum Type {
+        Homepage, BugTracker, FAQ, Donation, Help, Missing, Unknown
+    };
+
+    Url(QString url, Type type) : m_url(url), m_type(type) {}
+    Url(QString url, QString type)
+            : m_url(url)
+    {
+        if (type == "homepage")
+    		m_type = Url::Homepage;
+    	else if (type == "bugtracker")
+    		m_type = Url::BugTracker;
+    	else if (type == "faq")
+    		m_type = Url::FAQ;
+    	else if (type == "donation")
+    		m_type = Url::Donation;
+    	else if (type == "help")
+    		m_type = Url::Help;
+    	else if (type == "missing")
+    		m_type = Url::Missing;
+        else
+    	   m_type = Url::Unknown;
+    }
+
+    QString m_url;
+    Type m_type;
+};
+
 class Component
 {
 
@@ -67,6 +98,7 @@ public:
     QString m_projectGroup;
     QStringList m_compulsoryForDesktops;
     QStringList m_extends;
+    QList<Url> m_urls;
 
 private:
     void addKeyword(QString keyword, QString locale);

@@ -129,7 +129,7 @@ bool Component::loadFromAppdataFile(QString filename)
         } else if (tagName == "updatecontact" || tagName == "update_contact") {
             m_updateContact = text;
         } else if (tagName == "url") {
-            qDebug() << "WARNING: url not parsed";
+            m_urls << Url(text, element.attribute("type"));
         } else if (tagName == "project_group") {
             m_projectGroup = text;
         } else if (tagName == "compulsory_for_desktop") {
