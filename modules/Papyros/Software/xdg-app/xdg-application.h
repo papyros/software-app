@@ -24,8 +24,6 @@
 #include <QObject>
 #include <QString>
 
-#include <AppstreamQt/component.h>
-
 #include "base.h"
 
 class XdgApplication: public Application
@@ -60,7 +58,7 @@ public:
         return m_component.iconUrl(size);
     }
 
-    Appstream::Component m_component;
+    Appstream::Component *m_component;
     QString m_branch;
     QString m_origin;
     QString m_arch;

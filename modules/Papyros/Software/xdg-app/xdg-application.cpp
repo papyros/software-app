@@ -53,6 +53,10 @@ XdgApplication::XdgApplication(XdgAppInstalledRef *app_ref, State state, QObject
     QString desktopPath = deployDir + "/files/share/applications";
     QString appdataPath = deployDir + "/files/share/appdata";
 
+    Appstream::Store *store = Appstream::Store();
+    store->load(desktopPath);
+    store->load(appdataPath);
+
     m_component = findComponent(QStringList() << desktopPath << appdataPath,
         desktopId);
 }
