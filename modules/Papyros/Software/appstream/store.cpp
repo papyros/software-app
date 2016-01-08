@@ -17,10 +17,22 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "application.h"
+#include "store.h"
 
-void Application::refineFromAppstream(Appstream::Component component)
+using namespace Appstream;
+
+bool Store::load(QString path)
 {
-    if (!component.name().isEmpty())
-        m_name = component.name();
+    QDir dir(path);
+
+    if (!dir.exists())
+        return false;
+
+    Q_FOREACH(QString filename, dir.entryList()) {
+        Component component;
+
+
+    }
+
+    return true;
 }

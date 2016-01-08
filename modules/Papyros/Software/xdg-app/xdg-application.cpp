@@ -19,7 +19,7 @@
 
 #include "xdg-application.h"
 
-#include <AppstreamQt/database.h>
+#include "appstream/store.h"
 
 XdgApplication::XdgApplication(XdgAppInstalledRef *app_ref, State state, QObject *parent)
     : Application(parent)
@@ -53,28 +53,11 @@ XdgApplication::XdgApplication(XdgAppInstalledRef *app_ref, State state, QObject
     QString desktopPath = deployDir + "/files/share/applications";
     QString appdataPath = deployDir + "/files/share/appdata";
 
-    Appstream::Store *store = Appstream::Store();
-    store->load(desktopPath);
-    store->load(appdataPath);
+    Appstream::Store store;
+    store.load(desktopPath);
+    store.load(appdataPath);
 
-    m_component = findComponent(QStringList() << desktopPath << appdataPath,
-        desktopId);
-}
-
-Appstream::Component XdgApplication::findComponent(QStringList paths, QString id)
-{
-    Q_FOREACH(QString path, paths) {
-        Appstream::Database database(path);
-        if (!database.open())
-            return Appstream::Component();
-
-        Appstream::Component component = database.componentById(id);
-
-        if (component.isValid())
-            return component;
-    }
-
-    return Appstream::Component();
+    m_component = store.componentById(desktopId);
 }
 
 void XdgApplication::install()

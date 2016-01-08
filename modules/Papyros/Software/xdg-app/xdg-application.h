@@ -40,7 +40,7 @@ public:
     QString iconName() const override
     {
         return m_type == Application::Runtime ? "application-x-executable"
-                                              : m_component.icon();
+                                              : "";
     }
 
     QString installedVersion() const override
@@ -53,12 +53,7 @@ public:
         return "UNKNOWN";
     }
 
-    Q_INVOKABLE QUrl iconUrl(const QSize& size) const
-    {
-        return m_component.iconUrl(size);
-    }
-
-    Appstream::Component *m_component;
+    Appstream::Component m_component;
     QString m_branch;
     QString m_origin;
     QString m_arch;

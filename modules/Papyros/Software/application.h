@@ -22,7 +22,7 @@
 #include <QObject>
 #include <QString>
 
-#include "appstream.h"
+#include "appstream/component.h"
 
 class Application: public QObject
 {
@@ -48,7 +48,7 @@ public:
 
     Application(QObject *parent = nullptr) : QObject(parent) {}
 
-    void refineFromAppstream(Appstream::Component *component);
+    void refineFromAppstream(Appstream::Component component);
 
     virtual QString iconName() const = 0;
     virtual QString latestVersion() const = 0;

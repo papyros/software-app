@@ -17,10 +17,28 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "application.h"
+#ifndef STORE_H
+#define STORE_H
 
-void Application::refineFromAppstream(Appstream::Component component)
+#include <QObject>
+
+#include "component.h"
+
+namespace Appstream
 {
-    if (!component.name().isEmpty())
-        m_name = component.name();
+
+class Store
+{
+
+public:
+    bool load(QString path);
+
+    Component componentById(QString id) { return Component(); }
+
+private:
+    QList<Component> components;
+};
+
 }
+
+#endif // STORE_H
