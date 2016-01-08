@@ -26,39 +26,10 @@
 #include <QString>
 #include <QHash>
 
+#include "url.h"
+
 namespace Appstream
 {
-
-class Url
-{
-public:
-    enum Type {
-        Homepage, BugTracker, FAQ, Donation, Help, Missing, Unknown
-    };
-
-    Url(QString url, Type type) : m_url(url), m_type(type) {}
-    Url(QString url, QString type)
-            : m_url(url)
-    {
-        if (type == "homepage")
-    		m_type = Url::Homepage;
-    	else if (type == "bugtracker")
-    		m_type = Url::BugTracker;
-    	else if (type == "faq")
-    		m_type = Url::FAQ;
-    	else if (type == "donation")
-    		m_type = Url::Donation;
-    	else if (type == "help")
-    		m_type = Url::Help;
-    	else if (type == "missing")
-    		m_type = Url::Missing;
-        else
-    	   m_type = Url::Unknown;
-    }
-
-    QString m_url;
-    Type m_type;
-};
 
 class Component
 {
@@ -102,14 +73,6 @@ public:
 
 private:
     void addKeyword(QString keyword, QString locale);
-
-    static SourceKind kindFromFilename(QString filename);
-
-    static bool loadDocumentFromFile(QDomDocument *document, QString filename);
-
-    template<typename T>
-    static T lookupLocale(QHash<QString, T> hash, QString locale = "");
-    static QString defaultLocale();
 
     QHash<QString,QString> m_names;
     QHash<QString,QString> m_comments;

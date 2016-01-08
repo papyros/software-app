@@ -40,6 +40,46 @@ QStringList stringsByTagName(QDomElement element, QString tagName) {
     return strings;
 }
 
+Component::SourceKind kindFromFilename(QString filename)
+{
+    QFileInfo fileInfo(filename);
+    QString suffix = fileInfo.suffix();
+
+    if (suffix == "xml.gz" || suffix == "yml" || suffix == "yml.gz")
+        return Component::Appstream;
+    else if (suffix == "appdata.xml" || suffix == "appdata.xml.in" || suffix == "xml")
+        return Component::Appdata;
+    else if (suffix == "metainfo.xml" || suffix == "metainfo.xml.in")
+        return Component::Metadata;
+    else
+        return Component::Unknown;
+}
+
+bool loadDocumentFromFile(QDomDocument *document, QString filename)
+{
+    QFile file(filename);
+
+    if (!file.open(QIODevice::ReadOnly))
+        return false;
+    if (!document->setContent(&file)) {
+        file.close();
+        return false;
+    }
+    file.close();
+    return true;
+}
+
+QString defaultLocale() {
+    return QLocale::system().name();
+}
+
+template<typename T>
+T lookupLocale(QHash<QString, T> hash, QString locale) {
+    if (locale.isEmpty())
+        locale = defaultLocale();
+    return hash[locale];
+}
+
 bool Component::loadFromFile(QString filename)
 {
     switch (kindFromFilename(filename)) {
@@ -176,46 +216,4 @@ QString Component::developerName(QString locale) const {
 
 QStringList Component::keywords(QString locale) const {
     return lookupLocale(m_keywords, locale);
-}
-
-// Static methods
-
-Component::SourceKind Component::kindFromFilename(QString filename)
-{
-    QFileInfo fileInfo(filename);
-    QString suffix = fileInfo.suffix();
-
-    if (suffix == "xml.gz" || suffix == "yml" || suffix == "yml.gz")
-        return Component::Appstream;
-    else if (suffix == "appdata.xml" || suffix == "appdata.xml.in" || suffix == "xml")
-        return Component::Appdata;
-    else if (suffix == "metainfo.xml" || suffix == "metainfo.xml.in")
-        return Component::Metadata;
-    else
-        return Component::Unknown;
-}
-
-bool Component::loadDocumentFromFile(QDomDocument *document, QString filename)
-{
-    QFile file(filename);
-
-    if (!file.open(QIODevice::ReadOnly))
-        return false;
-    if (!document->setContent(&file)) {
-        file.close();
-        return false;
-    }
-    file.close();
-    return true;
-}
-
-template<typename T>
-T Component::lookupLocale(QHash<QString, T> hash, QString locale) {
-    if (locale.isEmpty())
-        locale = defaultLocale();
-    return hash[locale];
-}
-
-QString Component::defaultLocale() {
-    return QLocale::system().name();
 }
