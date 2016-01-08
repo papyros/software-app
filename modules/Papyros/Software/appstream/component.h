@@ -23,11 +23,8 @@
 #include <QObject>
 
 #include <QDomDocument>
-#include <QDir>
-#include <QFileInfo>
 #include <QString>
 #include <QHash>
-#include <QLocale>
 
 namespace Appstream
 {
@@ -43,112 +40,26 @@ public:
         Unknown
     };
 
-    bool loadFromFile(QString filename)
-    {
-        switch (kindFromFilename(filename)) {
-        case Component::Appdata:
-            return loadFromAppdataFile(filename);
-        default:
-            return false;
-        }
-    }
+    bool loadFromFile(QString filename);
 
-    bool loadFromAppdataFile(QString filename)
-    {
-        QDomDocument doc("appstreaj");
+    bool loadFromAppdataFile(QString filename);
 
-        if (!loadDocumentFromFile(&doc, filename))
-            return false;
-
-        QDomElement docElem = doc.documentElement();
-
-        QDomElement appNode = doc.firstChildElement("application");
-        if (appNode.isNull())
-            appNode = doc.firstChildElement("component");
-        if (appNode.isNull())
-            return false;
-
-        for (QDomNode node = docElem.firstChild(); !node.isNull(); node = node.nextSibling()) {
-            QDomElement element = node.toElement();
-
-            if (!element.isNull())
-                continue;
-
-            QString tagName = element.tagName();
-            QString text = element.text();
-
-            if (tagName == "id") {
-                m_id = text;
-                QString kind = element.attribute("type");
-                if (!kind.isEmpty())
-                    m_kind = kind;
-            } else if (tagName == "priority") {
-                m_priority = text.toInt();
-            } else if (tagName == "pkgname") {
-                m_packageNames << text;
-            } else if (tagName == "bundle") {
-                // TODO: Parse and add the bundle
-            } else if (tagName == "name") {
-                QString language = element.attribute("xml:lang");
-                m_names[language] = text;
-            } else if (tagName == "summary") {
-                QString language = element.attribute("xml:lang");
-                m_comments[language] = text;
-            }
-        }
-    }
-
-    static SourceKind kindFromFilename(QString filename)
-    {
-        QFileInfo fileInfo(filename);
-        QString suffix = fileInfo.suffix();
-
-        if (suffix == "xml.gz" || suffix == "yml" || suffix == "yml.gz")
-            return Component::Appstream;
-        else if (suffix == "appdata.xml" || suffix == "appdata.xml.in" || suffix == "xml")
-            return Component::Appdata;
-        else if (suffix == "metainfo.xml" || suffix == "metainfo.xml.in")
-            return Component::Metadata;
-        else
-            return Component::Unknown;
-    }
-
-    static bool loadDocumentFromFile(QDomDocument *document, QString filename)
-    {
-        QFile file(filename);
-
-        if (!file.open(QIODevice::ReadOnly))
-            return false;
-        if (!document->setContent(&file)) {
-            file.close();
-            return false;
-        }
-        file.close();
-        return true;
-    }
-
-    QString name(QString locale = "") const {
-        return lookupLocale(m_names, locale);
-    }
-
-    QString comments(QString locale = "") const {
-        return lookupLocale(m_comments, locale);
-    }
-
-    static QString lookupLocale(QHash<QString, QString> hash, QString locale = "") {
-        if (locale.isEmpty())
-            locale = defaultLocale();
-        return hash[locale];
-    }
-
-    static QString defaultLocale() {
-        return QLocale::system().name();
-    }
+    QString name(QString locale = "") const;
+    QString comments(QString locale = "") const;
 
     QString m_id;
     QString m_kind;
     int m_priority;
     QStringList m_packageNames;
+
+private:
+    static SourceKind kindFromFilename(QString filename);
+
+    static bool loadDocumentFromFile(QDomDocument *document, QString filename);
+
+    static QString lookupLocale(QHash<QString, QString> hash, QString locale = "");
+    static QString defaultLocale();
+
     QHash<QString,QString> m_names;
     QHash<QString,QString> m_comments;
 };

@@ -19,6 +19,8 @@
 
 #include "store.h"
 
+#include <QDir>
+
 using namespace Appstream;
 
 bool Store::load(QString path)
