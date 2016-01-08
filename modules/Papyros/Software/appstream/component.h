@@ -44,24 +44,34 @@ public:
 
     bool loadFromAppdataFile(QString filename);
 
+    bool isNull() const { return m_id.isEmpty(); }
     QString name(QString locale = "") const;
-    QString comments(QString locale = "") const;
+    QString comment(QString locale = "") const;
+    QString developerName(QString locale = "") const;
+    QStringList keywords(QString locale = "") const;
 
     QString m_id;
     QString m_kind;
     int m_priority;
     QStringList m_packageNames;
+    QStringList m_categories;
+    QStringList m_architectures;
 
 private:
+    void addKeyword(QString keyword, QString locale);
+
     static SourceKind kindFromFilename(QString filename);
 
     static bool loadDocumentFromFile(QDomDocument *document, QString filename);
 
-    static QString lookupLocale(QHash<QString, QString> hash, QString locale = "");
+    template<typename T>
+    static T lookupLocale(QHash<QString, T> hash, QString locale = "");
     static QString defaultLocale();
 
     QHash<QString,QString> m_names;
     QHash<QString,QString> m_comments;
+    QHash<QString,QString> m_developerNames;
+    QHash<QString,QStringList> m_keywords;
 };
 
 }

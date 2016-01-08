@@ -33,8 +33,19 @@ bool Store::load(QString path)
     Q_FOREACH(QString filename, dir.entryList()) {
         Component component;
 
-
+        if (component.loadFromFile(path + "/" + filename))
+            m_components << component;
     }
 
     return true;
+}
+
+Component Store::componentById(QString id)
+{
+    Q_FOREACH(Component component, m_components) {
+        if (component.m_id == id)
+            return component;
+    }
+
+    return Component();
 }

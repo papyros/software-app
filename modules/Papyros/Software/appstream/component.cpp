@@ -22,6 +22,8 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QLocale>
+#include <QDir>
+#include <QDebug>
 
 using namespace Appstream;
 
@@ -37,12 +39,11 @@ bool Component::loadFromFile(QString filename)
 
 bool Component::loadFromAppdataFile(QString filename)
 {
-    QDomDocument doc("appstreaj");
+    qDebug() << "Loading from appdata file!";
+    QDomDocument doc("appdata");
 
     if (!loadDocumentFromFile(&doc, filename))
         return false;
-
-    QDomElement docElem = doc.documentElement();
 
     QDomElement appNode = doc.firstChildElement("application");
     if (appNode.isNull())
@@ -50,14 +51,16 @@ bool Component::loadFromAppdataFile(QString filename)
     if (appNode.isNull())
         return false;
 
-    for (QDomNode node = docElem.firstChild(); !node.isNull(); node = node.nextSibling()) {
+    for (QDomNode node = appNode.firstChild(); !node.isNull(); node = node.nextSibling()) {
         QDomElement element = node.toElement();
 
-        if (!element.isNull())
+        if (element.isNull())
             continue;
 
         QString tagName = element.tagName();
         QString text = element.text();
+
+        qDebug() << tagName;
 
         if (tagName == "id") {
             m_id = text;
@@ -76,18 +79,66 @@ bool Component::loadFromAppdataFile(QString filename)
         } else if (tagName == "summary") {
             QString language = element.attribute("xml:lang");
             m_comments[language] = text;
+        } else if (tagName == "developer_name") {
+            QString language = element.attribute("xml:lang");
+            m_developerNames[language] = text;
+        } else if (tagName == "description") {
+            qDebug() << "WARNING: description not parsed";
+        } else if (tagName == "icon") {
+            qDebug() << "WARNING: icon not parsed";
+        } else if (tagName == "categories") {
+            QDomNodeList categories = doc.elementsByTagName("category");
+            for (int i = 0; i < categories.count(); i++) {
+                QDomElement category = categories.at(i).toElement();
+                if (!category.isNull())
+                    m_categories << category.text();
+            }
+        } else if (tagName == "architectures") {
+            QDomNodeList architectures = doc.elementsByTagName("architecture");
+            for (int i = 0; i < architectures.count(); i++) {
+                QDomElement architecture = architectures.at(i).toElement();
+                if (!architecture.isNull())
+                    m_architectures << architecture.text();
+            }
+        } else if (tagName == "keywords") {
+            QDomNodeList keywords = doc.elementsByTagName("keyword");
+            for (int i = 0; i < keywords.count(); i++) {
+                QDomElement keyword = keywords.at(i).toElement();
+                if (!keyword.isNull()) {
+                    QString language = element.attribute("xml:lang");
+                    addKeyword(keyword.text(), language);
+                }
+            }
+        } else {
+            qFatal("Tag not supported: %s", qPrintable(tagName));
         }
     }
 
     return true;
 }
 
+void Component::addKeyword(QString keyword, QString locale) {
+    QStringList keywords = m_keywords.contains(locale) ? m_keywords[locale] : QStringList();
+
+    keywords << keyword;
+
+    m_keywords[locale] = keywords;
+}
+
 QString Component::name(QString locale) const {
     return lookupLocale(m_names, locale);
 }
 
-QString Component::comments(QString locale) const {
+QString Component::comment(QString locale) const {
     return lookupLocale(m_comments, locale);
+}
+
+QString Component::developerName(QString locale) const {
+    return lookupLocale(m_developerNames, locale);
+}
+
+QStringList Component::keywords(QString locale) const {
+    return lookupLocale(m_keywords, locale);
 }
 
 // Static methods
@@ -121,7 +172,8 @@ bool Component::loadDocumentFromFile(QDomDocument *document, QString filename)
     return true;
 }
 
-QString Component::lookupLocale(QHash<QString, QString> hash, QString locale) {
+template<typename T>
+T Component::lookupLocale(QHash<QString, T> hash, QString locale) {
     if (locale.isEmpty())
         locale = defaultLocale();
     return hash[locale];

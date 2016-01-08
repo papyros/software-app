@@ -33,10 +33,10 @@ class Store
 public:
     bool load(QString path);
 
-    Component componentById(QString id) { return Component(); }
+    Component componentById(QString id);
 
 private:
-    QList<Component> components;
+    QList<Component> m_components;
 };
 
 }

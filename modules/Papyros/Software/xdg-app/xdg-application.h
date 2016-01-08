@@ -53,16 +53,12 @@ public:
         return "UNKNOWN";
     }
 
-    Appstream::Component m_component;
     QString m_branch;
     QString m_origin;
     QString m_arch;
 
 public slots:
     void install();
-
-private:
-    static Appstream::Component findComponent(QStringList paths, QString id);
 };
 
 #endif // XDG_APPLICATION_H

@@ -57,7 +57,9 @@ XdgApplication::XdgApplication(XdgAppInstalledRef *app_ref, State state, QObject
     store.load(desktopPath);
     store.load(appdataPath);
 
-    m_component = store.componentById(desktopId);
+    Appstream::Component component = store.componentById(desktopId);
+    if (!component.isNull())
+        refineFromAppstream(component);
 }
 
 void XdgApplication::install()
