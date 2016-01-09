@@ -71,6 +71,7 @@ public:
     QStringList m_compulsoryForDesktops;
     QStringList m_extends;
     QList<Url> m_urls;
+    QString m_iconName;
 
 private:
     bool loadFromAppdataFile(QString filename);

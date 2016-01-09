@@ -40,6 +40,7 @@ XdgApplication::XdgApplication(XdgAppInstalledRef *app_ref, State state, QObject
         break;
     case XDG_APP_REF_KIND_RUNTIME:
         m_type = Application::Runtime;
+        m_iconName = "application-x-executable";
         m_summary = "Framework for applications";
 
         desktopId = m_name + ".runtime";

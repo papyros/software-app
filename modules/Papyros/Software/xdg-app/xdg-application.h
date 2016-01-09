@@ -37,12 +37,6 @@ class XdgApplication: public Application
 public:
     XdgApplication(XdgAppInstalledRef *app_ref, State state, QObject *parent = nullptr);
 
-    QString iconName() const override
-    {
-        return m_type == Application::Runtime ? "application-x-executable"
-                                              : "";
-    }
-
     QString installedVersion() const override
     {
         return m_branch;

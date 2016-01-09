@@ -19,8 +19,11 @@
 
 #include "application.h"
 
+#define REFINE_PROPERTY(name, value) if (!value.isEmpty()) name = value;
+
 void Application::refineFromAppstream(Appstream::Component component)
 {
-    if (!component.name().isEmpty())
-        m_name = component.name();
+    REFINE_PROPERTY(m_name, component.name());
+    REFINE_PROPERTY(m_summary, component.comment());
+    REFINE_PROPERTY(m_iconName, component.m_iconName);
 }

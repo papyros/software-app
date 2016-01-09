@@ -161,6 +161,7 @@ void Component::merge(const Component &other)
     MERGE_HASH_FIELD(other, m_comments);
     MERGE_HASH_FIELD(other, m_developerNames);
     MERGE_HASH_FIELD(other, m_keywords);
+    MERGE_FIELD(other, m_iconName);
 }
 
 bool Component::loadFromFile(QString filename)
@@ -302,7 +303,14 @@ bool Component::loadFromDesktopFile(QString filename)
             if (value != "Application")
                 return false;
         } else if (key == "Icon") {
-            qDebug() << "WARNING: Icon skipped";
+            QFileInfo info(value);
+
+            if (info.isAbsolute())
+                m_iconName = value;
+            else if (hasSuffix(value, {"png", "xpm", "svg"}))
+                m_iconName = info.completeBaseName();
+            else
+                m_iconName = value;
         } else if (key == "Categories") {
             QStringList categories = value.split(";");
             QStringList ignoredCategories = {"GTK", "Qt", "KDE", "GNOME"};
