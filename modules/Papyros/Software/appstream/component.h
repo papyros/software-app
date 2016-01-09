@@ -38,13 +38,14 @@ public:
     enum SourceKind {
         Appstream,
         Appdata,
-        Metadata,
+        Metainfo,
+        Desktop,
         Unknown
     };
 
-    bool loadFromFile(QString filename);
+    void merge(const Component &other);
 
-    bool loadFromAppdataFile(QString filename);
+    bool loadFromFile(QString filename);
 
     bool isNull() const { return m_id.isEmpty(); }
     QString name(QString locale = "") const;
@@ -54,7 +55,7 @@ public:
 
     QString m_id;
     QString m_kind;
-    int m_priority;
+    int m_priority = -1;
     QStringList m_packageNames;
     QStringList m_categories;
     QStringList m_architectures;
@@ -72,6 +73,9 @@ public:
     QList<Url> m_urls;
 
 private:
+    bool loadFromAppdataFile(QString filename);
+    bool loadFromDesktopFile(QString filename);
+
     void addKeyword(QString keyword, QString locale);
 
     QHash<QString,QString> m_names;

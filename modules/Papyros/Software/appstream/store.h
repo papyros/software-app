@@ -33,7 +33,7 @@ class Store
 public:
     bool load(QString path);
 
-    Component componentById(QString id);
+    Component componentById(QString id) const;
 
 private:
     QList<Component> m_components;

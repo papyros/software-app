@@ -24,8 +24,42 @@
 #include <QLocale>
 #include <QDir>
 #include <QDebug>
+#include <QSettings>
+
+#define MERGE_FIELD(other, fieldName) if (fieldName.isEmpty()) fieldName = other.fieldName;
+#define MERGE_LIST_FIELD(other, fieldName) mergeLists(fieldName, other.fieldName);
+#define MERGE_HASH_FIELD(other, fieldName) mergeHashes(fieldName, other.fieldName);
 
 using namespace Appstream;
+
+template<typename T>
+void mergeLists(QList<T> &list1, const QList<T> &list2)
+{
+    Q_FOREACH(T item, list2) {
+        if (!list1.contains(item))
+            list1 << item;
+    }
+}
+
+template<typename T, typename E>
+void mergeHashes(QHash<T, QList<E>> &hash1, const QHash<T, QList<E>> &hash2)
+{
+    Q_FOREACH(T key, hash2.keys()) {
+        if (hash1.contains(key))
+            hash1[key] << hash2[key];
+        else
+            hash1[key] = hash2[key];
+    }
+}
+
+template<typename T, typename E>
+void mergeHashes(QHash<T, E> &hash1, const QHash<T, E> &hash2)
+{
+    Q_FOREACH(T key, hash2.keys()) {
+        if (!hash1.contains(key))
+            hash1[key] = hash2[key];
+    }
+}
 
 QStringList stringsByTagName(QDomElement element, QString tagName) {
     QStringList strings;
@@ -40,17 +74,26 @@ QStringList stringsByTagName(QDomElement element, QString tagName) {
     return strings;
 }
 
+bool hasSuffix(QString filename, QStringList suffices)
+{
+    Q_FOREACH(QString suffix, suffices) {
+        if (filename.endsWith(suffix))
+            return true;
+    }
+
+    return false;
+}
+
 Component::SourceKind kindFromFilename(QString filename)
 {
-    QFileInfo fileInfo(filename);
-    QString suffix = fileInfo.suffix();
-
-    if (suffix == "xml.gz" || suffix == "yml" || suffix == "yml.gz")
+    if (hasSuffix(filename, {"xml.gz", "yml", "yml.gz"}))
         return Component::Appstream;
-    else if (suffix == "appdata.xml" || suffix == "appdata.xml.in" || suffix == "xml")
+    else if (hasSuffix(filename, {"appdata.xml", "appdata.xml.in", "xml"}))
         return Component::Appdata;
-    else if (suffix == "metainfo.xml" || suffix == "metainfo.xml.in")
-        return Component::Metadata;
+    else if (hasSuffix(filename, {"metainfo.xml", "metainfo.xml.in"}))
+        return Component::Metainfo;
+    else if (hasSuffix(filename, {"desktop", "desktop.in"}))
+        return Component::Desktop;
     else
         return Component::Unknown;
 }
@@ -75,16 +118,59 @@ QString defaultLocale() {
 
 template<typename T>
 T lookupLocale(QHash<QString, T> hash, QString locale) {
-    if (locale.isEmpty())
-        locale = defaultLocale();
-    return hash[locale];
+    QStringList locales = {QLocale::system().name(), QLocale::c().name()};
+    if (!locale.isEmpty())
+        locales.insert(0, locale);
+    qDebug() << locales << hash.keys();
+    Q_FOREACH(QString possibleLocale, locales) {
+        if (hash.contains(possibleLocale))
+            return hash[possibleLocale];
+    }
+    return T();
+}
+
+template<typename T>
+void removeItems(QList<T> *list, QList<T> sublist)
+{
+    Q_FOREACH(T item, sublist) {
+        list->removeAll(item);
+    }
+}
+
+void Component::merge(const Component &other)
+{
+    MERGE_FIELD(other, m_id);
+    MERGE_FIELD(other, m_kind);
+    if (m_priority == -1) m_priority = other.m_priority;
+    MERGE_LIST_FIELD(other, m_packageNames);
+    MERGE_LIST_FIELD(other, m_categories);
+    MERGE_LIST_FIELD(other, m_architectures);
+    MERGE_LIST_FIELD(other, m_kudos);
+    MERGE_LIST_FIELD(other, m_permissions);
+    MERGE_LIST_FIELD(other, m_vetos);
+    MERGE_LIST_FIELD(other, m_mimetypes);
+    MERGE_FIELD(other, m_projectLicense);
+    MERGE_FIELD(other, m_metadataLicense);
+    MERGE_FIELD(other, m_sourcePackageName);
+    MERGE_FIELD(other, m_updateContact);
+    MERGE_FIELD(other, m_projectGroup);
+    MERGE_LIST_FIELD(other, m_compulsoryForDesktops);
+    MERGE_LIST_FIELD(other, m_extends);
+    MERGE_LIST_FIELD(other, m_urls);
+    MERGE_HASH_FIELD(other, m_names);
+    MERGE_HASH_FIELD(other, m_comments);
+    MERGE_HASH_FIELD(other, m_developerNames);
+    MERGE_HASH_FIELD(other, m_keywords);
 }
 
 bool Component::loadFromFile(QString filename)
 {
     switch (kindFromFilename(filename)) {
     case Component::Appdata:
+    case Component::Metainfo:
         return loadFromAppdataFile(filename);
+    case Component::Desktop:
+        return loadFromDesktopFile(filename);
     default:
         return false;
     }
@@ -113,7 +199,7 @@ bool Component::loadFromAppdataFile(QString filename)
         QString tagName = element.tagName();
         QString text = element.text();
 
-        qDebug() << tagName << text;
+        // qDebug() << tagName << text;
 
         if (tagName == "id") {
             m_id = text;
@@ -190,6 +276,64 @@ bool Component::loadFromAppdataFile(QString filename)
             qFatal("Tag not supported: %s", qPrintable(tagName));
         }
     }
+
+    return true;
+}
+
+bool Component::loadFromDesktopFile(QString filename)
+{
+    QFileInfo fileInfo(filename);
+
+    m_id = fileInfo.fileName();
+
+    QSettings settings(filename, QSettings::IniFormat);
+
+    settings.beginGroup("Desktop Entry");
+
+    Q_FOREACH(QString key, settings.allKeys()) {
+        QString value = settings.value(key).toString();
+
+        // qDebug() << key << value;
+
+        if (key == "NoDisplay") {
+            if (value == "True")
+                m_vetos << "NoDisplay=true";
+        } else if (key == "Type") {
+            if (value != "Application")
+                return false;
+        } else if (key == "Icon") {
+            qDebug() << "WARNING: Icon skipped";
+        } else if (key == "Categories") {
+            QStringList categories = value.split(";");
+            QStringList ignoredCategories = {"GTK", "Qt", "KDE", "GNOME"};
+            removeItems(&categories, ignoredCategories);
+            m_categories << categories;
+        } else if (key == "Keywords") {
+            qDebug() << "WARNING: Name skipped";
+        } else if (key == "MimeType") {
+            qDebug() << "WARNING: Name skipped";
+        } else if (key == "OnlyShowIn") {
+            QStringList desktops = value.split(";");
+            if (desktops.count() == 1)
+                m_projectGroup = desktops[0];
+        } else if (key == "Name" || key == "_Name") {
+            m_names["C"] = value;
+        } else if (key.startsWith("Name")) {
+            qDebug() << "WARNING: Name skipped";
+        } else if (key == "Comment" || key == "_Comment") {
+            m_comments["C"] = value;
+        } else if (key.startsWith("Comment")) {
+            qDebug() << "WARNING: Comment skipped";
+        } else if (key == "X-AppInstall-Package") {
+            m_packageNames << value;
+        } else if (key == "X-Ubuntu-Software-Center-Name") {
+            m_names["C"] = value;
+        } else if (key.startsWith("X-Ubuntu-Software-Center-Name")) {
+            qDebug() << "WARNING: X-Ubuntu-Software-Center-Name skipped";
+        }
+    }
+
+    settings.endGroup();
 
     return true;
 }

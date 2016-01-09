@@ -20,6 +20,7 @@
 #include "store.h"
 
 #include <QDir>
+#include <QDebug>
 
 using namespace Appstream;
 
@@ -33,14 +34,28 @@ bool Store::load(QString path)
     Q_FOREACH(QString filename, dir.entryList()) {
         Component component;
 
-        if (component.loadFromFile(path + "/" + filename))
+        if (!component.loadFromFile(path + "/" + filename))
+            continue;
+
+        bool foundExisting = false;
+
+        for (int i = 0; i < m_components.count(); i++) {
+            Component &existingComponent = m_components[i];
+
+            if (existingComponent.m_id == component.m_id) {
+                existingComponent.merge(component);
+                foundExisting = true;
+            }
+        }
+
+        if (!foundExisting)
             m_components << component;
     }
 
     return true;
 }
 
-Component Store::componentById(QString id)
+Component Store::componentById(QString id) const
 {
     Q_FOREACH(Component component, m_components) {
         if (component.m_id == id)

@@ -40,9 +40,7 @@ find_package(Qt5 ${QT_MIN_VERSION} CONFIG REQUIRED COMPONENTS
              Quick
              Xml)
 
-# Find xdg-app
-find_package(XdgApp 0.4.6 REQUIRED)
-
+find_package(XdgApp REQUIRED)
 find_package(Papyros REQUIRED)
 
 install(FILES papyros-software.desktop

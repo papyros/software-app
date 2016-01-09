@@ -52,3 +52,8 @@ Url::Url(QString url, QString type)
     else
        m_type = Url::Unknown;
 }
+
+bool Url::operator==(const Url &other) const
+{
+    return m_type == other.m_type && m_url == other.m_url;
+}

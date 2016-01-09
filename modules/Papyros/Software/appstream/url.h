@@ -37,6 +37,8 @@ public:
     Url(QString url, Type type);
     Url(QString url, QString type);
 
+    bool operator==(const Url &other) const;
+
     QString m_url;
     Type m_type;
 };
